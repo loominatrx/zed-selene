@@ -1,0 +1,66 @@
+name: Release adapter binaries
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            executable: zed-selene-lsp
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+            executable: zed-selene-lsp
+          - target: x86_64-apple-darwin
+            runner: macos-15-intel
+            executable: zed-selene-lsp
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            executable: zed-selene-lsp.exe
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Build adapter
+        run: cargo build --release --manifest-path adapter/Cargo.toml --target ${{ matrix.target }}
+      - name: Stage release asset (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: cp target/${{ matrix.target }}/release/${{ matrix.executable }} zed-selene-lsp-${{ matrix.target }}
+      - name: Stage release asset (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Copy-Item target/${{ matrix.target }}/release/${{ matrix.executable }} zed-selene-lsp-${{ matrix.target }}.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zed-selene-lsp-${{ matrix.target }}
+          path: zed-selene-lsp-${{ matrix.target }}${{ runner.os == 'Windows' && '.exe' || '' }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: zed-selene-lsp-*
+          merge-multiple: true
+          path: release-assets
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true
