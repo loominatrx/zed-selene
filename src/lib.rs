@@ -88,6 +88,8 @@ fn download_adapter() -> Result<String> {
     if std::fs::metadata(&path).is_ok() {
         return Ok(path);
     }
+    std::fs::create_dir_all("bin")
+        .map_err(|error| format!("Could not create adapter directory: {error}"))?;
     zed::download_file(
         &asset.download_url,
         &path,
