@@ -1,6 +1,12 @@
 # Selene for Zed
 
-Zed extension providing inline Selene diagnostics for Luau files. See its [documentation](https://kampfkarren.github.io/selene/) to use this extension.
+Zed extension providing inline Selene diagnostics for Luau files.
+
+## Installation & usage
+
+As this is not published to the zed registry, you can clone this repository and install this as a dev extension using `zed: install dev extension`.
+
+To use selene, see its documentation [here](https://kampfkarren.github.io/selene/).
 
 ## AI Disclosure
 
